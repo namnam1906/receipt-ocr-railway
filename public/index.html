@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Receipt OCR Upload</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+<header class="topbar">
+  <div>
+    <h2>Receipt OCR</h2>
+    <p>AksonOCR + n8n + Google Sheets</p>
+  </div>
+  <a href="dashboard.html">Dashboard</a>
+</header>
+
+<main class="container">
+  <section class="card">
+    <h1>อัพโหลดสลิป / ใบเสร็จ</h1>
+
+    <form id="uploadForm">
+      <input type="file" name="file" required />
+
+      <select name="document_type">
+        <option value="slip">สลิปโอนเงิน</option>
+        <option value="receipt">ใบเสร็จ</option>
+      </select>
+
+      <select name="transaction_type">
+        <option value="expense">รายจ่าย</option>
+        <option value="income">รายรับ</option>
+      </select>
+
+      <input type="text" name="category" placeholder="หมวดหมู่" />
+      <input type="text" name="uploaded_by" placeholder="ผู้บันทึก" />
+
+      <button type="submit">ส่งเข้า n8n</button>
+    </form>
+
+    <pre id="result">รออัพโหลด...</pre>
+  </section>
+</main>
+
+<script src="app.js"></script>
+</body>
+</html>
