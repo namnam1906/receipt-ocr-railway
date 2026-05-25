@@ -3,14 +3,50 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Dashboard</title>
+  <title>Dashboard รายรับรายจ่าย</title>
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
 
-<div class="container">
-  <div class="card">
+<header class="topbar">
+  <div>
+    <h2>Dashboard</h2>
+    <p>รายรับรายจ่ายจาก Google Sheet</p>
+  </div>
+  <a href="index.html">Upload</a>
+</header>
+
+<main class="container">
+  <section class="summary">
+    <div class="stat income">
+      <span>รายรับรวม</span>
+      <strong id="incomeTotal">฿0</strong>
+    </div>
+
+    <div class="stat expense">
+      <span>รายจ่ายรวม</span>
+      <strong id="expenseTotal">฿0</strong>
+    </div>
+
+    <div class="stat net">
+      <span>สุทธิ</span>
+      <strong id="netTotal">฿0</strong>
+    </div>
+  </section>
+
+  <section class="card">
+    <div class="badge">หน้าแสดงข้อมูล</div>
     <h1>Dashboard รายรับรายจ่าย</h1>
+
+    <div class="toolbar">
+      <input id="searchInput" placeholder="ค้นหา..." />
+
+      <select id="typeFilter">
+        <option value="">ทั้งหมด</option>
+        <option value="income">รายรับ</option>
+        <option value="expense">รายจ่าย</option>
+      </select>
+    </div>
 
     <table>
       <thead>
@@ -20,21 +56,117 @@
           <th>หมวดหมู่</th>
           <th>รายละเอียด</th>
           <th>จำนวนเงิน</th>
+          <th>ธนาคาร</th>
+          <th>สถานะ</th>
         </tr>
       </thead>
 
-      <tbody>
+      <tbody id="tableBody">
         <tr>
-          <td>2026-05-25</td>
-          <td>รายจ่าย</td>
-          <td>ค่าอุปกรณ์</td>
-          <td>Office Plus</td>
-          <td>1250</td>
+          <td colspan="7">กำลังโหลดข้อมูล...</td>
         </tr>
       </tbody>
     </table>
-  </div>
-</div>
+  </section>
+</main>
+
+<script>
+let rows = [];
+
+const tbody = document.getElementById("tableBody");
+const searchInput = document.getElementById("searchInput");
+const typeFilter = document.getElementById("typeFilter");
+
+function money(value) {
+  return Number(value || 0).toLocaleString("th-TH", {
+    style: "currency",
+    currency: "THB"
+  });
+}
+
+function labelType(type) {
+  if (type === "income") return "รายรับ";
+  if (type === "expense") return "รายจ่าย";
+  return type || "-";
+}
+
+async function loadRows() {
+  try {
+    const response = await fetch("/api/transactions");
+    const result = await response.json();
+
+    if (!result.success) {
+      throw new Error(result.message || "โหลดข้อมูลไม่สำเร็จ");
+    }
+
+    rows = Array.isArray(result.data) ? result.data : [];
+
+    render();
+  } catch (error) {
+    tbody.innerHTML = `
+      <tr>
+        <td colspan="7">เกิดข้อผิดพลาด: ${error.message}</td>
+      </tr>
+    `;
+  }
+}
+
+function render() {
+  const keyword = searchInput.value.toLowerCase();
+  const type = typeFilter.value;
+
+  const filtered = rows.filter(row => {
+    const matchKeyword = JSON.stringify(row).toLowerCase().includes(keyword);
+    const matchType = !type || row.transaction_type === type;
+    return matchKeyword && matchType;
+  });
+
+  tbody.innerHTML = "";
+
+  if (filtered.length === 0) {
+    tbody.innerHTML = `
+      <tr>
+        <td colspan="7">ยังไม่มีข้อมูล</td>
+      </tr>
+    `;
+  }
+
+  filtered.forEach(row => {
+    tbody.innerHTML += `
+      <tr>
+        <td>${row.transaction_date || "-"}</td>
+        <td>
+          <span class="pill ${row.transaction_type}">
+            ${labelType(row.transaction_type)}
+          </span>
+        </td>
+        <td>${row.category || "-"}</td>
+        <td>${row.merchant || "-"}</td>
+        <td>${money(row.amount)}</td>
+        <td>${row.bank_name || "-"}</td>
+        <td>${row.status || "-"}</td>
+      </tr>
+    `;
+  });
+
+  const income = rows
+    .filter(r => r.transaction_type === "income")
+    .reduce((sum, r) => sum + Number(r.amount || 0), 0);
+
+  const expense = rows
+    .filter(r => r.transaction_type === "expense")
+    .reduce((sum, r) => sum + Number(r.amount || 0), 0);
+
+  document.getElementById("incomeTotal").textContent = money(income);
+  document.getElementById("expenseTotal").textContent = money(expense);
+  document.getElementById("netTotal").textContent = money(income - expense);
+}
+
+searchInput.addEventListener("input", render);
+typeFilter.addEventListener("change", render);
+
+loadRows();
+</script>
 
 </body>
 </html>
