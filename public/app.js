@@ -32,8 +32,8 @@ form.addEventListener("submit", async (e) => {
             <strong>${Number(data.amount || 0).toLocaleString("th-TH")} บาท</strong>
           </div>
           <div>
-            <span>ผู้รับ / ร้านค้า</span>
-            <strong>${data.merchant || "-"}</strong>
+            <span>ผู้รับ</span>
+            <strong>${data.payee_name || data.merchant || "-"}</strong>
           </div>
           <div>
             <span>ธนาคาร</span>
